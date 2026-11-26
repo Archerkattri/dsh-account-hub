@@ -40,16 +40,23 @@ Deliberately not included: model route definitions, CLI/ACP subagents (Codex,
 Claude Code, Antigravity ACP), MCP servers, research tooling. Those are profile
 configuration, not account management.
 
+There is no ACP implementation here. If you want the compliant Antigravity
+route, run an ACP client (for example T3 Code) against Google's official
+`antigravity-acp` binary; this bundle neither downloads nor drives it.
+
 ## Terms of service
 
 Some providers prohibit using subscription OAuth through a third-party proxy.
 That is their policy, not a bug, and no setting here makes it safe.
 
-- **Google Antigravity / Gemini**: accounts reached through third-party proxies
-  are suspended (`403 PERMISSION_DENIED`, reason `TOS_VIOLATION`); re-login does
-  not restore them and repeat offences escalate. The compliant path is Google's
-  official Antigravity CLI as an ACP server (`agy acp`), driven by an ACP
-  subagent backend. This bundle does not implement that path.
+- **Google Antigravity / Gemini**: **do not connect Antigravity accounts to
+  this bundle.** Google enforces its terms against Antigravity traffic that
+  reaches it through a third-party proxy: accounts are suspended
+  (`403 PERMISSION_DENIED`, reason `TOS_VIOLATION`), re-login does not restore
+  them, and repeat offences escalate. The documented route is the official,
+  unmodified `antigravity-acp` binary inside an ACP-capable client (T3 Code,
+  Zed). That client is a separate product; this bundle has no ACP code and does
+  not implement, wrap, or configure that path.
 - **Claude Pro / Max**: Anthropic likewise prohibits proxying Claude Pro OAuth.
   Use the official local Claude Code CLI or Agent SDK.
 - **ChatGPT / Codex**: OpenAI has been permissive with Codex OAuth clients, but

@@ -14,8 +14,10 @@
 > [!IMPORTANT]
 > **Scope.** This bundle manages **accounts only**: sign-in, account cards,
 > quota, rotation. Model routes, CLI subagents, and research tooling are *not*
-> part of this plugin; they are ordinary profile configuration. See
-> [Out of scope](#out-of-scope).
+> part of this plugin; they are ordinary profile configuration. It does **not**
+> implement, wrap, or configure the official Antigravity ACP client — that is a
+> separate application. See [Out of scope](#out-of-scope) and
+> [Honest limitations](#honest-limitations).
 
 ## Why
 
@@ -120,12 +122,15 @@ credential while it is healthy, so two accounts do not alternate mid-chat.
 > That is their policy, not a bug in this plugin, and no rotation setting makes
 > it safe.
 
-- **Google Antigravity / Gemini**: Google suspends accounts that reach
-  Antigravity through a third-party proxy (`403 PERMISSION_DENIED`, reason
-  `TOS_VIOLATION`); re-login does not fix it and repeat offences escalate. The
-  compliant route is Google's official Antigravity CLI as an ACP server
-  (`agy acp`), driven by an ACP subagent backend, not a proxy. This bundle does
-  not implement that path; it only manages accounts.
+- **Google Antigravity / Gemini**: **do not add Antigravity accounts to this
+  plugin.** Google enforces its terms against Antigravity traffic that reaches
+  it through a third-party proxy: accounts are suspended
+  (`403 PERMISSION_DENIED`, reason `TOS_VIOLATION`), re-login does not restore
+  them, and repeat offences escalate. The route Google documents is the
+  official, unmodified `antigravity-acp` binary inside an ACP-capable client
+  (for example T3 Code or Zed). That client is a separate product; **this
+  bundle contains no ACP code and does not implement, wrap, or configure it**,
+  and no setting here makes Antigravity proxying compliant.
 - **Claude Pro / Max**: Anthropic likewise prohibits routing Claude Pro OAuth
   through third-party proxies. Use the official local Claude Code CLI or Agent
   SDK for that subscription.
@@ -180,6 +185,24 @@ Deliberately not in this plugin, so it stays small and auditable:
 - model routes and picker entries (profile configuration),
 - ACP / CLI subagents such as Codex, Claude Code, or Antigravity ACP,
 - MCP servers, research skills, document tooling.
+
+## Honest limitations
+
+- **No ACP implementation.** The repository contains no ACP client, no
+  `antigravity-acp` integration, and no subagent backend. Antigravity ACP users
+  must run an official ACP client; this bundle neither provides nor configures
+  that path.
+- **Identity masks are scoped.** `sensitive-patterns-replace` applies to native
+  Gemini ingress only, not to OpenAI-compatible system messages, and it rewrites
+  two known Harness identity sentences. It avoids a known false-`429` trigger;
+  it is fingerprint mitigation, not compliance, and it does not stop provider
+  detection by other means.
+- **Rotation is not safety.** Exclusive selection and fill-first affect routing
+  only. Multiple subscription accounts, or rotation to dodge limits, remain a
+  terms risk that belongs to the user.
+- **History.** Published history begins at v3.3.2. Pre-publication commits were
+  squashed during release cleanup to remove scratch files and personal
+  references; the changelog is the record of behaviour changes since 3.0.
 
 ## Development
 

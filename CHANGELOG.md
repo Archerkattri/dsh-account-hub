@@ -3,6 +3,14 @@
 Versions before 3.0 belonged to earlier, multi-component designs and are not
 listed; 3.0 is the single-plugin rewrite that this repository ships.
 
+## 3.3.3
+
+Documentation and scope correction; no functional change. ACP is now stated
+explicitly as out of scope and unimplemented, the Antigravity guidance says not
+to connect accounts here and points to the official ACP client as a separate
+product, the identity-mask scope is documented as fingerprint mitigation rather
+than compliance, and the published-history note explains the release squash.
+
 ## 3.3.2
 
 - Proxy repair now guarantees 5 retry rounds with a 30-second ceiling instead of

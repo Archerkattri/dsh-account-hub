@@ -71,7 +71,10 @@ touches and what it does not.
   provider's terms. Rotating several accounts to dodge rate limits is the
   documented risky case — the same warning T3 Code gives.
 - Google has suspended accounts associated with Antigravity proxying; treat
-  Antigravity as the highest-risk provider here.
+  Antigravity as the highest-risk provider here. This bundle is not an ACP
+  client and provides no compliant Antigravity path: connecting Antigravity to
+  this proxy is unsupported, and the request-repair masks are fingerprint
+  mitigation, not compliance.
 - The credential directory is readable by your OS user and by any process
   running as that user, including agent tool processes.
 
