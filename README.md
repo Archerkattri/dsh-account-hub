@@ -50,7 +50,8 @@ you to log in again.
 ## Install
 
 **1. Install CLIProxyAPI** from its repository (Windows: `winget install -e --id LuisPater.CLIProxyAPI`;
-macOS: `brew install cliproxyapi`; Linux: the installer in the project docs).
+macOS: `brew install cliproxyapi`; Linux: the installer in the project docs). The
+bundle is tested against CLIProxyAPI 8.1.x.
 
 **2. Add the bundle to your profile**
 
@@ -58,9 +59,12 @@ macOS: `brew install cliproxyapi`; Linux: the installer in the project docs).
 # from a local checkout
 dsh plugin --profile desktop add <path-to-this-directory>
 
-# or from the published repository
-dsh plugin --profile desktop add github:Archerkattri/dsh-account-hub
+# or from the published repository, pinned to a release tag
+dsh plugin --profile desktop add github:Archerkattri/dsh-account-hub#v3.3.2
 ```
+
+Pin a tag or commit SHA (as above): an unpinned `github:` spec follows `main`,
+so a later push changes what runs on your machine.
 
 From the app: **Plugins -> Add plugin -> this directory**.
 
