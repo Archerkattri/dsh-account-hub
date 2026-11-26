@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "账号中心",
+    "description": "通过自动启动的无窗口 CLIProxyAPI 管理 ChatGPT、Claude、Google Antigravity、Grok、Kimi、Meta 和 Devin 的 OAuth 账号。密钥仅保存在 DSH 凭据库中。",
+    "detail": "docs/DETAIL.md"
+  }
+}

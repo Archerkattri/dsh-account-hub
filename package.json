@@ -1,0 +1,60 @@
+{
+  "name": "@local/dsh-account-hub",
+  "version": "3.3.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node dev/check.mjs",
+    "test": "node dev/secrets-test.mjs && node dev/account-selection-test.mjs && node dev/routing-transition-test.mjs && node dev/usage-test.mjs && node dev/proxy-fixes-test.mjs",
+    "verify": "node dev/check.mjs && node dev/secrets-test.mjs && node dev/account-selection-test.mjs && node dev/routing-transition-test.mjs && node dev/usage-test.mjs && node dev/proxy-fixes-test.mjs"
+  },
+  "description": "Account manager for DeepSeek Harness: headless CLIProxyAPI lifecycle, OAuth subscription sign-in, 5-hour and weekly quota windows, and account rotation. Secrets stay in the DSH credential seam.",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "oauth",
+    "chatgpt",
+    "claude",
+    "gemini",
+    "antigravity",
+    "cliproxyapi",
+    "subscription"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Archerkattri/dsh-account-hub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Archerkattri/dsh-account-hub/issues"
+  },
+  "homepage": "https://github.com/Archerkattri/dsh-account-hub#readme",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "lib",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "docs",
+    "icon.svg",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "CHANGELOG.md"
+  ],
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": ["@deepseek-ai/dsh-client-ui-settings"]
+    }
+  }
+}

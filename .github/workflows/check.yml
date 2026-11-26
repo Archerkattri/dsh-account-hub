@@ -1,0 +1,28 @@
+name: check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Package checks (manifest, BOM, locale, icon, secret scan, syntax)
+        run: node dev/check.mjs
+      - name: Secret-hygiene unit tests
+        run: node dev/secrets-test.mjs
+      - name: Exclusive account-selection tests
+        run: node dev/account-selection-test.mjs
+      - name: Routing transition tests
+        run: node dev/routing-transition-test.mjs
+      - name: Usage-window tests
+        run: node dev/usage-test.mjs
+      - name: Proxy repair planning tests
+        run: node dev/proxy-fixes-test.mjs
+      - name: Client render smoke test
+        run: node dev/render-check.mjs

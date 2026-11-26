@@ -1,0 +1,17 @@
+node_modules/
+*.zip
+*.tgz
+*.log
+.DS_Store
+.env
+.env.*
+
+# Never commit credentials or local proof artifacts.
+.credentials*
+.account-hub-key
+.chatgpt-web-session
+continuation-proof.txt
+web-bridge-proof.txt
+.account-hub-selection.json
+.account-hub-selection.json.*.tmp
+.account-hub-selection.json.*.rollback

@@ -1,0 +1,4 @@
+- insert:
+    - id: account-hub
+      name: '@local/dsh-account-hub'
+      config: {}

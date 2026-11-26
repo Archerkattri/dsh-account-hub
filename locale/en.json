@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Account hub",
+    "description": "Manage OAuth accounts for ChatGPT, Claude, Google Antigravity, Grok, Kimi, Meta, and Devin through a self-starting headless CLIProxyAPI. Secrets stay in the DSH credential store.",
+    "detail": "docs/DETAIL.md"
+  }
+}
