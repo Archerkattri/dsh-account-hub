@@ -49,14 +49,13 @@ route, run an ACP client (for example T3 Code) against Google's official
 Some providers prohibit using subscription OAuth through a third-party proxy.
 That is their policy, not a bug, and no setting here makes it safe.
 
-- **Google Antigravity / Gemini**: **do not connect Antigravity accounts to
-  this bundle.** Google enforces its terms against Antigravity traffic that
-  reaches it through a third-party proxy: accounts are suspended
-  (`403 PERMISSION_DENIED`, reason `TOS_VIOLATION`), re-login does not restore
-  them, and repeat offences escalate. The documented route is the official,
-  unmodified `antigravity-acp` binary inside an ACP-capable client (T3 Code,
-  Zed). That client is a separate product; this bundle has no ACP code and does
-  not implement, wrap, or configure that path.
+- **Google Antigravity / Gemini**: Gemini itself is supported through your own
+  Google AI Studio or Vertex API key, or through Google's official
+  `antigravity-acp` binary inside an ACP-capable client (T3 Code, Zed). The
+  CLIProxy route is not a supported Antigravity path: Google enforces its terms
+  against third-party proxy access, accounts can be suspended
+  (`403 PERMISSION_DENIED`, `TOS_VIOLATION`), and re-login does not restore
+  them. This bundle has no ACP code and does not configure that client.
 - **Claude Pro / Max**: Anthropic likewise prohibits proxying Claude Pro OAuth.
   Use the official local Claude Code CLI or Agent SDK.
 - **ChatGPT / Codex**: OpenAI has been permissive with Codex OAuth clients, but

@@ -3,6 +3,13 @@
 Versions before 3.0 belonged to earlier, multi-component designs and are not
 listed; 3.0 is the single-plugin rewrite that this repository ships.
 
+## 3.3.4
+
+Gemini guidance rewritten: the Google AI Studio / Vertex API-key route and
+Google's official Antigravity ACP client are documented as the supported paths,
+while the CLIProxy route is described as unsupported for Antigravity rather than
+as a blanket "do not use Gemini". No functional change.
+
 ## 3.3.3
 
 Documentation and scope correction; no functional change. ACP is now stated

@@ -62,7 +62,7 @@ bundle is tested against CLIProxyAPI 8.1.x.
 dsh plugin --profile desktop add <path-to-this-directory>
 
 # or from the published repository, pinned to a release tag
-dsh plugin --profile desktop add github:Archerkattri/dsh-account-hub#v3.3.3
+dsh plugin --profile desktop add github:Archerkattri/dsh-account-hub#v3.3.4
 ```
 
 Pin a tag or commit SHA (as above): an unpinned `github:` spec follows `main`,
@@ -122,15 +122,14 @@ credential while it is healthy, so two accounts do not alternate mid-chat.
 > That is their policy, not a bug in this plugin, and no rotation setting makes
 > it safe.
 
-- **Google Antigravity / Gemini**: **do not add Antigravity accounts to this
-  plugin.** Google enforces its terms against Antigravity traffic that reaches
-  it through a third-party proxy: accounts are suspended
-  (`403 PERMISSION_DENIED`, reason `TOS_VIOLATION`), re-login does not restore
-  them, and repeat offences escalate. The route Google documents is the
-  official, unmodified `antigravity-acp` binary inside an ACP-capable client
-  (for example T3 Code or Zed). That client is a separate product; **this
-  bundle contains no ACP code and does not implement, wrap, or configure it**,
-  and no setting here makes Antigravity proxying compliant.
+- **Google Antigravity / Gemini**: Gemini has two supported routes that are
+  not this plugin: your own Google AI Studio or Vertex API key as an
+  `llm-pi-ai` provider, or Google's official `antigravity-acp` binary inside an
+  ACP-capable client (T3 Code, Zed). The CLIProxy route is not a supported
+  Antigravity path: Google enforces its terms against third-party proxy access,
+  accounts can be suspended (`403 PERMISSION_DENIED`, `TOS_VIOLATION`), and
+  re-login does not restore them. This bundle manages CLIProxy accounts only;
+  it contains no ACP code and does not configure that client.
 - **Claude Pro / Max**: Anthropic likewise prohibits routing Claude Pro OAuth
   through third-party proxies. Use the official local Claude Code CLI or Agent
   SDK for that subscription.
@@ -169,6 +168,20 @@ Account Hub plugin -- management API --> CLIProxyAPI (127.0.0.1:8317) --> provid
 
 Model traffic: llm-pi-ai route -----------> CLIProxyAPI --> provider
 ```
+
+### Using Gemini
+
+Three different things are often conflated:
+
+| Route | Status |
+| --- | --- |
+| Google AI Studio / Vertex API key through `llm-pi-ai` | Supported; no proxy involved |
+| Antigravity subscription through Google's official `antigravity-acp` client | Supported by Google; separate app, not this plugin |
+| Antigravity subscription through CLIProxyAPI | Not supported for Antigravity; Google enforces against it |
+
+This bundle only covers the third row's account plumbing. If you want Gemini in
+DeepSeek Harness, the API-key route is the simplest, and the ACP client is the
+subscription route.
 
 ## Model routes
 
