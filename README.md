@@ -62,7 +62,7 @@ bundle is tested against CLIProxyAPI 8.1.x.
 dsh plugin --profile desktop add <path-to-this-directory>
 
 # or from the published repository, pinned to a release tag
-dsh plugin --profile desktop add github:Archerkattri/dsh-account-hub#v3.3.2
+dsh plugin --profile desktop add github:Archerkattri/dsh-account-hub#v3.3.3
 ```
 
 Pin a tag or commit SHA (as above): an unpinned `github:` spec follows `main`,
