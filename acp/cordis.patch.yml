@@ -1,0 +1,21 @@
+# Official Antigravity CLI over the Agent Client Protocol.
+#
+# This bundle does not proxy OAuth and does not wrap `agy -p`: it mounts
+# Google's own ACP server as a subagent. Run `node install.mjs` once to fetch
+# and verify the official binary; the CLI must then be signed in interactively
+# with `agy`.
+- insert:
+    - id: subagent-acp-antigravity
+      name: '@deepseek-ai/dsh-subagent-acp'
+      config:
+        providerName: antigravity-acp
+        command: agy.exe
+        args:
+          - acp
+        permission: allow
+    - id: tool-subagent-antigravity
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: antigravity-acp
+        toolName: subagent_antigravity
+        maxDepth: provider-managed

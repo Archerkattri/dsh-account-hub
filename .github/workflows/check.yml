@@ -26,3 +26,5 @@ jobs:
         run: node dev/proxy-fixes-test.mjs
       - name: Client render smoke test
         run: node dev/render-check.mjs
+      - name: ACP companion unit tests
+        run: node acp/test/install-test.mjs

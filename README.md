@@ -14,10 +14,11 @@
 > [!IMPORTANT]
 > **Scope.** This bundle manages **accounts only**: sign-in, account cards,
 > quota, rotation. Model routes, CLI subagents, and research tooling are *not*
-> part of this plugin; they are ordinary profile configuration. It does **not**
-> implement, wrap, or configure the official Antigravity ACP client — that is a
-> separate application. See [Out of scope](#out-of-scope) and
-> [Honest limitations](#honest-limitations).
+> part of this plugin; they are ordinary profile configuration. The
+> account-manager bundle does not implement ACP; this repository ships an
+> optional companion bundle under [`acp/`](acp/README.md) that mounts Google's
+> official Antigravity CLI as an ACP subagent. See
+> [Out of scope](#out-of-scope) and [Honest limitations](#honest-limitations).
 
 ## Why
 
@@ -62,7 +63,7 @@ bundle is tested against CLIProxyAPI 8.1.x.
 dsh plugin --profile desktop add <path-to-this-directory>
 
 # or from the published repository, pinned to a release tag
-dsh plugin --profile desktop add github:Archerkattri/dsh-account-hub#v3.3.4
+dsh plugin --profile desktop add github:Archerkattri/dsh-account-hub#v3.4.0
 ```
 
 Pin a tag or commit SHA (as above): an unpinned `github:` spec follows `main`,
@@ -176,12 +177,19 @@ Three different things are often conflated:
 | Route | Status |
 | --- | --- |
 | Google AI Studio / Vertex API key through `llm-pi-ai` | Supported; no proxy involved |
-| Antigravity subscription through Google's official `antigravity-acp` client | Supported by Google; separate app, not this plugin |
+| Antigravity subscription through Google's official `antigravity-acp` client | Supported by Google; implemented by the optional `acp/` companion bundle in this repository |
 | Antigravity subscription through CLIProxyAPI | Not supported for Antigravity; Google enforces against it |
 
-This bundle only covers the third row's account plumbing. If you want Gemini in
-DeepSeek Harness, the API-key route is the simplest, and the ACP client is the
-subscription route.
+The account-manager bundle only covers the third row's account plumbing. For the
+subscription route, install the companion:
+
+```bash
+node acp/install.mjs   # fetch, SHA-512 verify, and link Google's unmodified CLI
+agy                    # sign in with Google once
+```
+
+Then restart DeepSeek Harness; `acp/README.md` lists Google's constraints and
+the verification steps.
 
 ## Model routes
 
@@ -196,15 +204,16 @@ list aligned with what the proxy actually serves. Examples are in
 Deliberately not in this plugin, so it stays small and auditable:
 
 - model routes and picker entries (profile configuration),
-- ACP / CLI subagents such as Codex, Claude Code, or Antigravity ACP,
+- ACP / CLI subagents inside this bundle (Antigravity ACP is provided by the
+  separate `acp/` companion; Codex and Claude Code are official profile bundles),
 - MCP servers, research skills, document tooling.
 
 ## Honest limitations
 
-- **No ACP implementation.** The repository contains no ACP client, no
-  `antigravity-acp` integration, and no subagent backend. Antigravity ACP users
-  must run an official ACP client; this bundle neither provides nor configures
-  that path.
+- **ACP lives in the companion.** The account-manager bundle contains no ACP
+  code. The optional `acp/` companion installs Google's unmodified binary,
+  verifies its SHA-512, and mounts it as an ACP subagent: native sign-in, Gemini
+  models only, no token reuse, no `agy -p` wrapping, and no account rotation.
 - **Identity masks are scoped.** `sensitive-patterns-replace` applies to native
   Gemini ingress only, not to OpenAI-compatible system messages, and it rewrites
   two known Harness identity sentences. It avoids a known false-`429` trigger;

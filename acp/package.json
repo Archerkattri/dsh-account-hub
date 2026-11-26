@@ -1,0 +1,17 @@
+{
+  "name": "@local/dsh-antigravity-acp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Official Antigravity CLI over ACP for DeepSeek Harness: installs Google's unmodified agy binary and mounts it as an ACP subagent.",
+  "keywords": ["deepseek-harness", "dsh", "dsh-plugin", "antigravity", "acp", "gemini"],
+  "license": "MIT",
+  "scripts": {
+    "check": "node install.mjs --check",
+    "install-cli": "node install.mjs"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" }
+  },
+  "files": ["cordis.patch.yml", "install.mjs", "README.md"]
+}

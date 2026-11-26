@@ -71,9 +71,10 @@ touches and what it does not.
   provider's terms. Rotating several accounts to dodge rate limits is the
   documented risky case — the same warning T3 Code gives.
 - Google has suspended accounts associated with Antigravity proxying; treat
-  the Antigravity proxy route as the highest-risk path here. This bundle is not
-  an ACP client: for Gemini use an API key, or Google's official ACP client.
-  The request-repair masks are fingerprint mitigation, not compliance.
+  the Antigravity proxy route as the highest-risk path here. The optional `acp/`
+  companion bundle implements Google's official ACP route instead; the
+  account-manager bundle itself is not an ACP client. The request-repair masks
+  are fingerprint mitigation, not compliance.
 - The credential directory is readable by your OS user and by any process
   running as that user, including agent tool processes.
 

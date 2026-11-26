@@ -3,6 +3,15 @@
 Versions before 3.0 belonged to earlier, multi-component designs and are not
 listed; 3.0 is the single-plugin rewrite that this repository ships.
 
+## 3.4.0
+
+Adds the optional `acp/` companion bundle. It downloads Google's unmodified
+Antigravity CLI from the official updater manifest, verifies the SHA-512, links
+`agy`, and mounts `agy acp` through `@deepseek-ai/dsh-subagent-acp` as
+`subagent_antigravity`. No OAuth token is read, stored, or proxied; it does not
+wrap `agy -p` and does not rotate Antigravity accounts. Account Hub itself is
+unchanged.
+
 ## 3.3.4
 
 Gemini guidance rewritten: the Google AI Studio / Vertex API-key route and

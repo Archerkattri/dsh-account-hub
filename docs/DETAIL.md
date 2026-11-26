@@ -36,13 +36,14 @@ not pass through the plugin: your harness reaches the proxy through ordinary
 Included: the CLIProxyAPI process lifecycle, account sign-in and health, quota,
 rotation, and model-catalog sync.
 
-Deliberately not included: model route definitions, CLI/ACP subagents (Codex,
-Claude Code, Antigravity ACP), MCP servers, research tooling. Those are profile
-configuration, not account management.
+Deliberately not included in the account-manager bundle: model route
+definitions, CLI/ACP subagents (Codex, Claude Code), MCP servers, research
+tooling. Those are profile configuration, not account management.
 
-There is no ACP implementation here. If you want the compliant Antigravity
-route, run an ACP client (for example T3 Code) against Google's official
-`antigravity-acp` binary; this bundle neither downloads nor drives it.
+Antigravity ACP is the exception: this repository ships an optional companion
+bundle under `acp/` that installs Google's unmodified `antigravity-cli` binary,
+verifies its SHA-512, and mounts it as an ACP subagent. The account-manager
+bundle itself still contains no ACP code.
 
 ## Terms of service
 
