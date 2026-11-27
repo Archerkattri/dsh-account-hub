@@ -19,14 +19,14 @@
  */
 
 import { spawn } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { randomBytes } from 'node:crypto'
 import { REFS, redact, readSecret, writeSecret, migrateLegacyFile, removeLegacyFile } from './lib/secrets.js'
 import { preferenceFor, planAccountSelection, shouldRestoreBeforeStatusAction } from './lib/account-selection.js'
 import { planStrategyTransition, validateTransitionCredentials } from './lib/routing-transition.js'
-import { codexUsageWindows, parseAntigravityUsage } from './lib/usage.js'
+import { codexUsageWindows, parseAntigravityUsage, parseOpenCodeUsage } from './lib/usage.js'
 import { planProxyFixes } from './lib/proxy-fixes.js'
 
 /** The web-server service is required: every endpoint below is served by it. */
@@ -490,6 +490,95 @@ const QUOTA_ERROR_TTL_MS = 15_000
 /** Cache of per-credential usage windows keyed by auth_index. */
 const quotaCache = new Map()
 
+/** OpenCode Go reports rolling, weekly and monthly percent-used windows. */
+const OPENCODE_USAGE_URL = 'https://opencode.ai/inference/go/v1/usage'
+const OPENCODE_PLAN = 'Go ($10/mo)'
+const QWEN_PLAN = 'Token Plan Standard ($18/mo)'
+const providerQuotaCache = new Map()
+const PROVIDER_QUOTA_TTL_MS = 60_000
+
+/**
+ * Read OpenCode Go quota through its API key. Failures are reported, never
+ * thrown, so the Accounts page still renders when the key is missing.
+ * @param ctx - plugin context.
+ * @returns plan label, windows, and an optional error.
+ */
+async function opencodeQuota(ctx) {
+  const cached = providerQuotaCache.get('opencode-go')
+  if (cached !== undefined && Date.now() - cached.at < PROVIDER_QUOTA_TTL_MS) return cached.value
+  let value = { provider: 'opencode-go', plan: OPENCODE_PLAN, windows: [] }
+  try {
+    const key = await readSecret(ctx, REFS.opencodeKey)
+    if (key === undefined) throw new Error('OPENCODE_GO_API_KEY is not configured')
+    const response = await fetch(OPENCODE_USAGE_URL, {
+      headers: { Authorization: `Bearer ${key}`, 'User-Agent': 'dsh-account-hub' },
+      signal: AbortSignal.timeout(15_000),
+    })
+    if (!response.ok) throw new Error(`usage endpoint answered ${response.status}`)
+    const payload = await response.json()
+    value = { provider: 'opencode-go', plan: OPENCODE_PLAN, windows: parseOpenCodeUsage(payload) }
+  } catch (error) {
+    value = { provider: 'opencode-go', plan: OPENCODE_PLAN, windows: [], error: redact(String(error.message ?? error)) }
+  }
+  providerQuotaCache.set('opencode-go', { at: Date.now(), value })
+  return value
+}
+
+const subagentCache = { at: 0, value: [] }
+
+/**
+ * Recent subagents with the route and effort each child actually used.
+ * Reads the session projection cache (metadata only; no transcripts).
+ * @returns up to eight newest children of the newest root session.
+ */
+function recentSubagents() {
+  if (Date.now() - subagentCache.at < 60_000) return subagentCache.value
+  const dir = join(homedir(), '.dsh', 'storages', 'session_projcache', 'sessions')
+  const roots = []
+  let names = []
+  try { names = readdirSync(dir).filter(name => name.endsWith('.json')) } catch { names = [] }
+  for (const file of names) {
+    try {
+      const record = JSON.parse(readFileSync(join(dir, file), 'utf8'))?.record
+      const catalog = record?.rows?.subagentCatalog?.val?.head?.values
+      if (!Array.isArray(catalog) || catalog.length === 0) continue
+      const newest = Math.max(...catalog.map(child => Number(child.childCreatedAt) || 0))
+      roots.push({ root: file.replace(/\.json$/, ''), newest, catalog })
+    } catch { /* skip unreadable cache entry */ }
+  }
+  roots.sort((left, right) => right.newest - left.newest)
+  const value = (roots[0]?.catalog ?? []).slice(-8).reverse().map(child => {
+    let route = {}
+    try {
+      const record = JSON.parse(readFileSync(join(dir, `${child.childId}.json`), 'utf8'))?.record
+      route = record?.rows?.modelSelection?.val?.lastUsed ?? {}
+      const title = record?.rows?.title?.val
+      return {
+        id: child.childId,
+        name: child.name,
+        label: child.label,
+        title: typeof title === 'string' ? title : undefined,
+        model: route.model,
+        provider: route.provider,
+        effort: route.reasoningEffort,
+      }
+    } catch { return { id: child.childId, name: child.name, label: child.label } }
+  })
+  subagentCache.at = Date.now()
+  subagentCache.value = value
+  return value
+}
+
+/** Qwen's token-plan API exposes no usage read; report the plan only. */
+function qwenQuota() {
+  return {
+    provider: 'qwen-token-plan-individual',
+    plan: QWEN_PLAN,
+    windows: [],
+    note: 'The token-plan API exposes no usage endpoint; a 429 means the window is exhausted.',
+  }
+}
+
 /**
  * Ask the proxy to query one Antigravity account's usage summary. The proxy
  * substitutes `$TOKEN$`, so this plugin never handles the access token.
@@ -938,6 +1027,11 @@ async function handle(ctx, request, response) {
       affinity,
       fixes,
       client,
+      quota: {
+        opencode: await opencodeQuota(ctx),
+        qwen: qwenQuota(),
+      },
+      subagents: recentSubagents(),
     })
     return
   }

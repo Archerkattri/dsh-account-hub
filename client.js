@@ -362,6 +362,60 @@ window.__ModuleLoader__.load({
         h(Button, { small: true, variant: 'ghost', onClick: () => { void onCancel().catch(() => undefined) } }, 'Cancel')))
     }
 
+    /** Recent subagents with the route and effort each one used. */
+    function SubagentStrip({ subagents }) {
+      if (!Array.isArray(subagents) || subagents.length === 0) return null
+      return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6, border: `1px solid ${C.borderStrong}`, borderRadius: 10, padding: '10px 12px' } },
+        h('div', { style: { fontSize: 11.5, fontWeight: 700, color: C.text } }, 'Recent subagents'),
+        subagents.map(entry => h('div', { key: entry.id, title: `${entry.label ?? entry.name}${entry.title ? ` — ${entry.title}` : ''}\n${entry.provider ?? '?'}/${entry.model ?? '?'}${entry.effort ? ` · ${entry.effort} effort` : ''}`, style: { display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 11.5, flexWrap: 'wrap', cursor: 'default' } },
+          h('span', { style: { fontWeight: 600, color: C.text } }, entry.label ?? entry.name ?? entry.id),
+          h('span', { style: { color: C.sub, fontFamily: C.mono, fontSize: 10.5 } },
+            entry.model === undefined ? 'route unknown' : `${entry.provider}/${entry.model}${entry.effort ? ` · ${entry.effort}` : ''}`))))
+    }
+
+    /** Plan and quota strip: OpenCode Go windows and the Qwen plan state. */
+    function QuotaStrip({ quota }) {
+      if (quota === undefined) return null
+      const opencode = quota.opencode
+      const qwen = quota.qwen
+      const label = window => window === '5h' ? '5h' : window === 'weekly' ? 'week' : window === 'monthly' ? 'month' : 'limit'
+      const fmtReset = epoch => {
+        if (!Number.isFinite(epoch)) return ''
+        const date = new Date(epoch * 1000)
+        return `resets ${date.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`
+      }
+      const bar = entry => {
+        const used = Math.max(0, Math.min(100, Number(entry.usedPercent) || 0))
+        const remaining = 100 - used
+        const tone = remaining <= 10 ? C.red : remaining <= 30 ? '#d9a441' : C.green
+        return h('div', { key: entry.window, title: `${left}% of this window remains${Number.isFinite(entry.resetsAtEpoch) ? `; resets ${new Date(entry.resetsAtEpoch * 1000).toLocaleString()}` : ''}`, style: { display: 'flex', gap: 8, alignItems: 'center', fontSize: 11.5 } },
+          h('span', { style: { width: 42, color: C.sub } }, label(entry.window)),
+          h('div', { style: { flex: 1, height: 6, borderRadius: 4, background: C.borderStrong, overflow: 'hidden' } },
+            h('div', { style: { width: `${remaining}%`, height: '100%', background: tone, borderRadius: 4 } })),
+          h('span', { style: { width: 42, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: remaining <= 10 ? C.red : C.text } }, `${remaining}% left`),
+          h('span', { style: { width: 118, color: C.sub, fontSize: 10.5 } }, fmtReset(entry.resetsAtEpoch)))
+      }
+      const rows = []
+      if (opencode !== undefined) {
+        rows.push(h('div', { key: 'opencode', style: { display: 'flex', flexDirection: 'column', gap: 4 } },
+          h('div', { style: { display: 'flex', gap: 8, alignItems: 'baseline' } },
+            h('span', { style: { fontSize: 11.5, fontWeight: 700, color: C.sub } }, 'OpenCode Go'),
+            h('span', { style: { fontSize: 11, color: C.sub } }, opencode.plan ?? ''),
+            opencode.error !== undefined ? h('span', { style: { fontSize: 10.5, color: C.red } }, opencode.error) : null),
+          (opencode.windows ?? []).map(bar)))
+      }
+      if (qwen !== undefined) {
+        rows.push(h('div', { key: 'qwen', style: { display: 'flex', gap: 8, alignItems: 'baseline', fontSize: 11.5 } },
+          h('span', { style: { fontWeight: 700, color: C.sub } }, 'Qwen Cloud'),
+          h('span', { style: { color: C.sub, fontSize: 11 } }, qwen.plan ?? ''),
+          h('span', { style: { color: C.sub, fontSize: 10.5 } }, qwen.note ?? '')))
+      }
+      if (rows.length === 0) return null
+      return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6, border: `1px solid ${C.borderStrong}`, borderRadius: 10, padding: '10px 12px' } },
+        h('div', { style: { fontSize: 11.5, fontWeight: 700, color: C.text } }, 'Plans & quota'),
+        rows)
+    }
+
     /** The Accounts settings section. */
     function AccountsSection() {
       const [state, setState] = useState()
@@ -497,6 +551,8 @@ window.__ModuleLoader__.load({
         ? h('div', { style: { fontSize: 12, color: C.red, border: '1px solid rgba(229,83,75,.45)', background: 'rgba(229,83,75,.10)', borderRadius: 10, padding: '10px 12px', lineHeight: 1.5 } }, error)
         : null,
       notice !== undefined ? h('div', { style: { fontSize: 12, color: C.green } }, notice) : null,
+      h(QuotaStrip, { quota: state?.quota }),
+      h(SubagentStrip, { subagents: state?.subagents }),
       session !== undefined ? h(LoginDialog, { session, onCancel: cancelLogin, onFinished: finishLogin }) : null,
       // Sign-in: one compact row of providers.
       running
@@ -586,6 +642,91 @@ window.__ModuleLoader__.load({
         : null)
     }
 
+    /** Compact quota + subagent bar above the composer; no Settings trip needed. */
+    function QuotaDock() {
+      const [state, setState] = useState()
+      const [open, setOpen] = useState(false)
+      useEffect(() => {
+        let live = true
+        const load = async () => {
+          try {
+            const next = await api('/state')
+            if (live) setState(next)
+          } catch { /* keep the last snapshot */ }
+        }
+        void load()
+        const timer = setInterval(() => { void load() }, 30000)
+        return () => { live = false; clearInterval(timer) }
+      }, [])
+      const quota = state?.quota
+      const opencode = quota?.opencode
+      const windows = opencode?.windows ?? []
+      const windowLeft = (list, window) => {
+        const entry = (list ?? []).find(item => item.window === window)
+        if (entry === undefined) return undefined
+        return Math.max(0, 100 - Math.round(Number(entry.usedPercent) || 0))
+      }
+      const oc5 = windowLeft(windows, '5h')
+      const resetOf = (list, window) => {
+        const entry = (list ?? []).find(item => item.window === window)
+        return Number.isFinite(entry?.resetsAtEpoch) ? new Date(entry.resetsAtEpoch * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : undefined
+      }
+      const accountUsage = (state?.accounts ?? []).filter(account => Array.isArray(account.usage) && account.usage.length > 0)
+      const gpt5 = accountUsage.map(account => windowLeft(account.usage, '5h')).filter(value => value !== undefined)
+      const gptWorst = gpt5.length === 0 ? undefined : Math.min(...gpt5)
+      const gptTitle = accountUsage.length === 0
+        ? 'No ChatGPT account usage reported'
+        : accountUsage.map((account, index) => `ChatGPT ${index + 1}: ${windowLeft(account.usage, '5h') ?? '?'}% 5h left, ${windowLeft(account.usage, 'weekly') ?? '?'}% week left`).join('\n')
+      const qwen = quota?.qwen
+      const subagents = Array.isArray(state?.subagents) ? state.subagents : []
+      const latest = subagents[0]
+      const toneFor = value => value === undefined ? C.sub : value <= 10 ? C.red : value <= 30 ? '#d9a441' : C.green
+      const chipStyle = { display: 'inline-flex', alignItems: 'center', gap: 5, border: `1px solid ${C.borderStrong}`, background: 'transparent', color: C.sub, borderRadius: 999, padding: '2px 9px', fontSize: 10.5, cursor: 'pointer' }
+      const chip = (key, dot, label, title) => h('button', {
+        key, type: 'button', title,
+        onClick: () => setOpen(value => !value),
+        style: chipStyle,
+      }, dot === undefined ? null : h('span', { style: { width: 6, height: 6, borderRadius: 6, background: dot, display: 'inline-block' } }), h('span', null, label))
+      const ocTitle = ['OpenCode Go — Go plan', ...windows.map(entry => `${entry.window === 'monthly' ? 'month' : entry.window === 'weekly' ? 'week' : entry.window}: ${Math.max(0, 100 - Math.round(Number(entry.usedPercent) || 0))}% left${Number.isFinite(entry.resetsAtEpoch) ? `, resets ${new Date(entry.resetsAtEpoch * 1000).toLocaleString()}` : ''}`)].join('\n')
+      return h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6, fontSize: 11, color: C.sub } },
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' } },
+          chip('oc', toneFor(oc5), `OC 5h ${oc5 === undefined ? '—' : `${oc5}%`}`, ocTitle),
+          chip('gpt', toneFor(gptWorst), `GPT 5h ${gptWorst === undefined ? '—' : `${gptWorst}%`}`, gptTitle),
+          chip('qwen', C.sub, 'QW 5h —', `${qwen?.plan ?? 'Qwen plan'} — the token-plan API exposes no usage endpoint; a 429 means this window is exhausted.`),
+          latest !== undefined
+            ? chip('subs', undefined, `recent ${subagents.length}`, `Recent subagent sessions (not currently running). The newest: ${latest.label ?? latest.name} used ${latest.provider ?? '?'}/${latest.model ?? '?'}${latest.effort ? ` at ${latest.effort} effort` : ''}. Click for all.`)
+            : null),
+        open
+          ? h('div', { style: { border: `1px solid ${C.borderStrong}`, borderRadius: 10, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 4, background: 'var(--dsw-alias-bg-l1, transparent)' } },
+            windows.map(entry => {
+              const left = Math.max(0, 100 - Math.round(Number(entry.usedPercent) || 0))
+              const reset = Number.isFinite(entry.resetsAtEpoch) ? new Date(entry.resetsAtEpoch * 1000).toLocaleString() : undefined
+              return h('div', { key: entry.window, title: `${left}% of the OpenCode ${entry.window} window remains${reset ? `; resets ${reset}` : ''}`, style: { display: 'flex', gap: 8, cursor: 'default' } },
+                h('span', { style: { width: 38, opacity: .7 } }, entry.window === 'monthly' ? 'month' : entry.window === 'weekly' ? 'week' : entry.window),
+                h('span', { style: { fontVariantNumeric: 'tabular-nums' } }, `${left}% left`),
+                reset ? h('span', { style: { opacity: .6 } }, `resets ${reset}`) : null)
+            }),
+            accountUsage.length > 0
+              ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 } },
+                accountUsage.map((account, index) => h('div', {
+                  key: account.name ?? index,
+                  title: accountUsage.map((item, at) => `ChatGPT ${at + 1}: ${windowLeft(item.usage, '5h') ?? '?'}% 5h, ${windowLeft(item.usage, 'weekly') ?? '?'}% week`).join('\n'),
+                  style: { display: 'flex', gap: 8, opacity: .85 },
+                },
+                h('span', null, `ChatGPT ${index + 1}`),
+                h('span', null, `5h ${windowLeft(account.usage, '5h') ?? '?'}% · wk ${windowLeft(account.usage, 'weekly') ?? '?'}%`))))
+              : null,
+            qwen !== undefined ? h('div', { title: qwen.note ?? '', style: { opacity: .75 } }, `Qwen: ${qwen.plan ?? 'plan'} · no usage API`) : null,
+            subagents.slice(0, 6).map(entry => h('div', {
+              key: entry.id,
+              title: `${entry.label ?? entry.name}\n${entry.provider ?? '?'}/${entry.model ?? '?'}${entry.effort ? ` · ${entry.effort}` : ''}${entry.title ? `\n${entry.title}` : ''}`,
+              style: { display: 'flex', gap: 8, opacity: .85, cursor: 'pointer' },
+            },
+            h('span', { style: { flex: 1 } }, entry.label ?? entry.name),
+            h('span', { style: { fontFamily: C.mono, fontSize: 10 } }, `${entry.model ?? '?'}${entry.effort ? `·${entry.effort}` : ''}`))))
+          : null)
+    }
+
     /** Navigation glyph for the section. */
     function AccountsIcon({ size = 16, active }) {
       return h('svg', {
@@ -607,6 +748,9 @@ window.__ModuleLoader__.load({
         ctx.slots.inject('settings.section.icon', () => ctx.slots.register({
           name: 'settings.section.icon', id: 'accounts', order: 35,
         }, AccountsIcon))
+        ctx.slots.inject('conversation.composer.dock', () => ctx.slots.register({
+          name: 'conversation.composer.dock', id: 'quota-dock', order: 20, label: 'Quota',
+        }, QuotaDock))
       },
     }
   },
